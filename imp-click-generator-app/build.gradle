@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+dependencies {
+    implementation(project(":protocol"))
+    implementation project(path: ':')
+}
+
+application {
+    mainClassName 'de.kafka.ad.generator.ImpClickGeneratorApp'
+}

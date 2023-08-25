@@ -1,0 +1,9 @@
+rootProject.name = 'spark-streaming-with-kafka'
+
+include("basic")
+
+include("protocol")
+
+include("imp-click-generator-app")
+
+include("imp-click-join-app")

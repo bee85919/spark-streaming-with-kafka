@@ -1,7 +1,7 @@
 /*
 확인 코드 (iTerm)
-$KAFKA_HOME/bin/kafka-console-consumer.sh --topic impression-event --from-beginning --bootstrap-server localhost:29092,localhost:39092
-$KAFKA_HOME/bin/kafka-console-consumer.sh --topic click-event --from-beginning --bootstrap-server localhost:29092,localhost:39092
+$KAFKA_HOME/bin/kafka-console-consumer.sh --topic impression-event --bootstrap-server localhost:29092,localhost:39092
+$KAFKA_HOME/bin/kafka-console-consumer.sh --topic click-even --bootstrap-server localhost:29092,localhost:39092
 */
 
 
@@ -55,10 +55,10 @@ streamDfImp.printSchema
 // 확인
 val cntByImp = streamDfImp.groupBy(col("impId"), col("timestamp")).count()
 
-//cntByImp.writeStream.
-//  outputMode("update").
-//  format("console").
-//  start()
+cntByImp.writeStream.
+  outputMode("update").
+  format("console").
+  start()
 
 
 // click-event Dataset으로 읽기
@@ -111,17 +111,17 @@ streamDfClick.printSchema
 // 테스트
 val cntByClick = streamDfClick.groupBy(col("impId"), col("timestamp")).count()
 
-//cntByClick.writeStream.
-//  outputMode("update").
-//  format("console").
-//  start()
+cntByClick.writeStream.
+  outputMode("update").
+  format("console").
+  start()
 
 
 // impression-event 와 click-event join하기
 import spark.implicits._
 val streamDfJoinedClick = streamDfImp.withColumnRenamed("timestamp", "impTimestamp").
-  withWatermark("impTimestamp", "60 seconds").
-  dropDuplicates("impId", "impTimestamp").
+    withWatermark("impTimestamp", "60 seconds").
+    dropDuplicates("impId", "impTimestamp").
   join(
     streamDfClick.
       withWatermark("timestamp", "60 seconds")
@@ -138,10 +138,10 @@ streamDfJoinedClick.printSchema
 val cntByJoinedClick = streamDfJoinedClick.withWatermark("timestamp", "120 seconds").
   groupBy(col("impId"), col("adId"), col("timestamp")).count()
 
-//cntByJoinedClick.writeStream.
-//  outputMode("append").
-//  format("console").
-//  start()
+cntByJoinedClick.writeStream.
+  outputMode("append").
+  format("console").
+  start()
 
 
 // 데이터 변환
@@ -156,16 +156,18 @@ val checkpointPath = s"${dataPath}/streaming/checkpoint/write-joined-click-event
 
 import org.apache.spark.sql.streaming.Trigger
 
-//outputDfJoinedClick.
-//  writeStream.
-//  outputMode("append").
-//  format("kafka").
-//  option("kafka.bootstrap.servers", "localhost:29092,localhost:39092").
-//  option("topic", "joined-click-event").
-//  option("checkpointLocation", checkpointPath).
-//  trigger(Trigger.ProcessingTime("5 seconds")).
-//  start()
+outputDfJoinedClick.
+  writeStream.
+  outputMode("append").
+  format("kafka").
+  option("kafka.bootstrap.servers", "localhost:29092,localhost:39092").
+  option("topic", "joined-click-event").
+  option("checkpointLocation", checkpointPath).
+  trigger(Trigger.ProcessingTime("5 seconds")).
+  start()
 
+
+// 새로운 터미널 실행
 // adId 기준으로 joined click event 를 count 하기
 import org.apache.spark.sql.functions._
 val dfJoinedClick = spark.
@@ -220,10 +222,11 @@ val clickCntByAdId = streamDfJoinedClick.
 
 
 // 데이터가 제대로 들어오는지 확인
-//clickCntByAdId.writeStream.
-//  outputMode("update").
-//  format("console").
-//  start()
+clickCntByAdId.writeStream.
+  outputMode("update").
+  format("console").
+  start()
+
 
 // csv 파일로 내보낸다
 val dataPath = System.getenv("SPARK_DATA")
